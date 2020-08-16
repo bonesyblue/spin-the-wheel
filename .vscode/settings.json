@@ -1,0 +1,4 @@
+{
+    "dart.flutterSelectDeviceWhenConnected": true,
+    "dart.previewEmbeddedDevTools": true
+}
