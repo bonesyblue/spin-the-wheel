@@ -21,6 +21,14 @@ class WheelPainter extends CustomPainter {
       wheelBackgroundBrush,
     );
 
+    final wheelPinBrush = Paint()..color = Colors.white;
+
+    canvas.drawCircle(
+      centerpoint,
+      6,
+      wheelPinBrush,
+    );
+
     final coarseScaleCount = 24;
     final coarseScaleInnerRadius = radius - 24;
 
