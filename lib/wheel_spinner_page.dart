@@ -1,5 +1,8 @@
+import 'dart:math';
+
 import 'package:SpinTheWheel/wheel_painter.dart';
 import 'package:flutter/material.dart';
+import 'package:vector_math/vector_math.dart';
 
 class WheelSpinnerPage extends StatefulWidget {
   @override
@@ -8,11 +11,16 @@ class WheelSpinnerPage extends StatefulWidget {
 
 // Page to display the wheel painter
 class _WheelSpinnerPageState extends State<WheelSpinnerPage> {
+  // Wheel properties
+  final diameter = 250.0;
+  final localCenterpoint = Offset(125, 125);
+
   // Add a dynamic count property to update when the wheel is spun
   int count = 0;
 
   // Keep a reference to the drag start position during drag movement
   Offset dragStartPosition;
+  double offsetAngle = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -27,16 +35,16 @@ class _WheelSpinnerPageState extends State<WheelSpinnerPage> {
         children: [
           Text("Count: $count", style: countLabelStyle),
           SizedBox(height: 16),
-          GestureDetector(
-            onPanStart: this.onPanStart,
-            onPanUpdate: this.onPanUpdate,
-            onPanEnd: this.onPanEnd,
-            child: Center(
+          Center(
+            child: GestureDetector(
+              onPanStart: this.onPanStart,
+              onPanUpdate: this.onPanUpdate,
+              onPanEnd: this.onPanEnd,
               child: Container(
-                width: 250,
-                height: 250,
+                width: diameter,
+                height: diameter,
                 child: CustomPaint(
-                  painter: WheelPainter(),
+                  painter: WheelPainter(offset: offsetAngle),
                 ),
               ),
             ),
@@ -47,18 +55,30 @@ class _WheelSpinnerPageState extends State<WheelSpinnerPage> {
   }
 
   void onPanStart(DragStartDetails details) {
-    debugPrint("Pan start: $details");
     setState(() {
-      this.dragStartPosition = details.globalPosition;
+      this.dragStartPosition = details.localPosition;
     });
   }
 
   void onPanUpdate(DragUpdateDetails details) {
-    debugPrint("Pan update: $details");
+    // Calcuate angle delta of drag relative to the centerpoint
+    Offset dragStart = dragStartPosition - localCenterpoint;
+    double deltaStart = atan2(dragStart.dy, dragStart.dx);
+
+    Offset dragPosition = details.localPosition - localCenterpoint;
+    double deltaEnd = atan2(dragPosition.dy, dragPosition.dx);
+
+    double delta = deltaEnd - deltaStart;
+    String deltaDeg = degrees(delta).toStringAsFixed(0);
+
+    print("Drag delta angle (relative to circle center): $deltaDeg°");
+
+    setState(() {
+      offsetAngle = delta;
+    });
   }
 
   void onPanEnd(DragEndDetails details) {
-    debugPrint("Pan end: $details");
     setState(() {
       this.dragStartPosition = null;
     });

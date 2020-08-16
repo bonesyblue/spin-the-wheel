@@ -3,6 +3,12 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 class WheelPainter extends CustomPainter {
+  final double offset;
+
+  WheelPainter({
+    @required this.offset,
+  });
+
   @override
   void paint(Canvas canvas, Size size) {
     final centerX = size.width / 2;
@@ -38,6 +44,7 @@ class WheelPainter extends CustomPainter {
       outerRadius: radius,
       innerRadius: coarseScaleInnerRadius,
       canvas: canvas,
+      offset: this.offset,
     );
 
     final fineScaleCount = coarseScaleCount * 5;
@@ -49,6 +56,7 @@ class WheelPainter extends CustomPainter {
       outerRadius: radius,
       innerRadius: fineScaleInnerRadius,
       canvas: canvas,
+      offset: this.offset,
     );
   }
 
@@ -58,10 +66,11 @@ class WheelPainter extends CustomPainter {
     @required double outerRadius,
     @required double innerRadius,
     @required Canvas canvas,
+    double offset,
   }) {
     final double deltaAngle = (2 * pi) / count;
     for (var i = 0; i <= count; i++) {
-      final alphaAngle = (i * deltaAngle);
+      final alphaAngle = offset + (i * deltaAngle);
       final startOffsetY = center.dy + (outerRadius * sin(alphaAngle));
       final startOffsetX = center.dx + (outerRadius * cos(alphaAngle));
 
@@ -80,5 +89,6 @@ class WheelPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
+  bool shouldRepaint(WheelPainter oldDelegate) =>
+      this.offset != oldDelegate.offset;
 }
