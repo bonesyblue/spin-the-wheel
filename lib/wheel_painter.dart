@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 
 class WheelPainter extends CustomPainter {
   final double offset;
+  final int coarseLineCount;
 
   WheelPainter({
     @required this.offset,
+    @required this.coarseLineCount,
   });
 
   @override
@@ -17,6 +19,7 @@ class WheelPainter extends CustomPainter {
 
     final centerpoint = Offset(centerX, centerY);
 
+    // Wheel background
     final wheelBackgroundBrush = Paint()
       ..color = Colors.pink
       ..style = PaintingStyle.fill;
@@ -27,6 +30,7 @@ class WheelPainter extends CustomPainter {
       wheelBackgroundBrush,
     );
 
+    // Center pin
     final wheelPinBrush = Paint()..color = Colors.white;
 
     canvas.drawCircle(
@@ -35,11 +39,11 @@ class WheelPainter extends CustomPainter {
       wheelPinBrush,
     );
 
-    final coarseScaleCount = 24;
+    // Coarse scale markers
     final coarseScaleInnerRadius = radius - 24;
 
     drawScaleLines(
-      count: coarseScaleCount,
+      count: coarseLineCount,
       center: centerpoint,
       outerRadius: radius,
       innerRadius: coarseScaleInnerRadius,
@@ -47,7 +51,8 @@ class WheelPainter extends CustomPainter {
       offset: this.offset,
     );
 
-    final fineScaleCount = coarseScaleCount * 5;
+    // Fine scale markers
+    final fineScaleCount = coarseLineCount * 5;
     final fineScaleInnerRadius = radius - 12;
 
     drawScaleLines(
