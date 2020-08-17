@@ -1,9 +1,14 @@
 import 'dart:math';
+import 'dart:core';
 
-import 'package:SpinTheWheel/rotation_controller.dart';
+import 'package:SpinTheWheel/rotation_delegate.dart';
 import 'package:SpinTheWheel/wheel_painter.dart';
+import 'package:SpinTheWheel/wheel_spinner.dart';
 import 'package:flutter/material.dart';
 import 'package:vector_math/vector_math.dart';
+import 'package:provider/provider.dart';
+
+const VELOCITY_DAMPING_COEFFICIENT = 0.1;
 
 class WheelSpinnerPage extends StatefulWidget {
   @override
@@ -19,6 +24,8 @@ class _WheelSpinnerPageState extends State<WheelSpinnerPage>
 
   // Add a dynamic count property to update when the wheel is spun
   int count = 0;
+  int ticksPassed = 0;
+  bool isIncreasing = false;
 
   // Keep a reference to the drag start position during drag movement
   Offset dragStartPosition;
@@ -51,9 +58,11 @@ class _WheelSpinnerPageState extends State<WheelSpinnerPage>
       mappedCount = 24 + mappedCount;
     }
 
-    setState(() {
-      this.count = mappedCount;
-    });
+    if (mappedCount != this.ticksPassed) {
+      setState(() {
+        this.ticksPassed = mappedCount.clamp(0, 24);
+      });
+    }
   }
 
   @override
@@ -62,14 +71,16 @@ class _WheelSpinnerPageState extends State<WheelSpinnerPage>
     // Initialise the animation values to a fixed zero value
     flingAnimation = AlwaysStoppedAnimation(0.0);
     flingAnimationController = AnimationController(vsync: this);
-    rotationDelegate = new RotationDelegate(0.0);
-    rotationDelegate.addListener(onRotationValueChanged);
+    rotationDelegate = new RotationDelegate(
+      rotationalCenter: localCenterpoint,
+      maxValue: 450,
+      minValue: 0,
+    );
   }
 
   @override
   void dispose() {
     super.dispose();
-    rotationDelegate.removeListener(onRotationValueChanged);
   }
 
   @override
@@ -83,26 +94,14 @@ class _WheelSpinnerPageState extends State<WheelSpinnerPage>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text("Count: $count", style: countLabelStyle),
+          Text(
+            "Count: $count",
+            style: countLabelStyle,
+          ),
           SizedBox(height: 16),
           Center(
-            child: GestureDetector(
-              onPanStart: this.onPanStart,
-              onPanUpdate: this.onPanUpdate,
-              onPanEnd: this.onPanEnd,
-              child: Container(
-                width: diameter,
-                height: diameter,
-                child: ValueListenableBuilder(
-                  valueListenable: rotationDelegate,
-                  builder: (context, value, child) => CustomPaint(
-                    painter: WheelPainter(
-                      offset: value,
-                      coarseLineCount: coarseScaleCount,
-                    ),
-                  ),
-                ),
-              ),
+            child: WheelSpinner(
+              diameter: this.diameter,
             ),
           ),
         ],
@@ -115,7 +114,7 @@ class _WheelSpinnerPageState extends State<WheelSpinnerPage>
     flingAnimation = AlwaysStoppedAnimation(0.0);
 
     // Set the drag reference position
-    rotationDelegate.dragStartPosition = details.localPosition;
+    rotationDelegate.panStartPosition = details.localPosition;
   }
 
   void onPanUpdate(DragUpdateDetails details) {
@@ -124,16 +123,29 @@ class _WheelSpinnerPageState extends State<WheelSpinnerPage>
 
     // Calcuate angle delta of drag relative to the centerpoint
     rotationDelegate.rotate(
-      localPosition: details.localPosition,
-      center: localCenterpoint,
+      position: details.localPosition,
     );
   }
 
   void onPanEnd(DragEndDetails details) {
-    rotationDelegate.dragStartPosition = null;
+    int newCount = this.count;
+    int _max = 72;
+    int min = 0;
+    if (isIncreasing) {
+      newCount += ticksPassed;
+    } else {
+      newCount -= ticksPassed;
+    }
+    newCount = newCount.clamp(min, _max);
+
+    setState(() {
+      this.count = newCount;
+    });
+
+    rotationDelegate.panStartPosition = null;
 
     Velocity velocity = details.velocity;
-    double maxVelocity = 0.025 *
+    double maxVelocity = VELOCITY_DAMPING_COEFFICIENT *
         max(
           velocity.pixelsPerSecond.dx,
           velocity.pixelsPerSecond.dy,

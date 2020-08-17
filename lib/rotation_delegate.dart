@@ -1,31 +1,70 @@
 import 'dart:math';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:vector_math/vector_math.dart';
 
-class RotationDelegate extends ValueNotifier<double> {
-  Offset _dragStartPosition;
+class RotationDelegate extends ChangeNotifier {
+  Offset _panStartPosition;
 
-  RotationDelegate(double value) : super(value);
+  // (Input)
+  int maxValue;
+  int minValue;
+  int coarseStepCount;
+  int fineStepCount;
+  Offset rotationalCenter;
 
-  set dragStartPosition(Offset offset) => _dragStartPosition = offset;
+  /// === Observable properties (Output) ===
+  double alpha;
+  double value;
+
+  /// Delegate used in combination with a GestureDetector, to handle circular
+  /// rotation of a widget.
+  ///
+  /// * [rotationalCenter] The centerpoint of the rotational movement
+  /// * [alpha] The initial offset angle
+  /// * [maxValue] The maxium value on the circular scale
+  /// * [minValue] The minimum value on the circular scale
+  /// * [coarseStepCount] The number of coarse scale markings
+  /// * [fineStepCount] The number of fine scale markings
+  RotationDelegate({
+    @required this.maxValue,
+    @required this.rotationalCenter,
+    this.alpha = 0.0,
+    this.coarseStepCount = 24,
+    this.fineStepCount = 24 * 10,
+    this.minValue = 0,
+    this.value = 0.0,
+  });
+
+  /// Hold a mutable reference to the start offset of each pan
+  /// gesture
+  set panStartPosition(Offset offset) => _panStartPosition = offset;
 
   /// Rotate by the provided offset value
-  ///
   void rotate({
-    @required Offset localPosition,
-    @required Offset center,
+    @required Offset position,
   }) {
     // Calcuate angle delta of drag relative to the centerpoint
-    Offset dragStart = _dragStartPosition - center;
+    Offset dragStart = _panStartPosition - rotationalCenter;
     double deltaStart = atan2(dragStart.dy, dragStart.dx);
 
-    Offset dragPosition = localPosition - center;
+    Offset dragPosition = position - rotationalCenter;
     double deltaEnd = atan2(dragPosition.dy, dragPosition.dx);
 
     double delta = deltaEnd - deltaStart;
 
-    this.value = delta;
+    /// Delta ranges between -pi -> 0 -> pi. This is mapped to a linear scale
+    /// from 0 -> 2pi
+    if (delta < 0) {
+      delta = (2 * pi) + delta;
+    }
+
+    // TODO map angle to linear scale
+    double scalingFactor = (2 * pi) / (maxValue - minValue);
+    double newValue = scalingFactor * delta;
+
+    notifyListeners();
   }
 
   /// Calculates the resting position of the rotated object.
