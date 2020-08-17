@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:SpinTheWheel/circular_math.dart';
 import 'package:SpinTheWheel/wheel_painter.dart';
 import 'package:flutter/material.dart';
 
@@ -22,9 +23,17 @@ class _WheelSpinnerState extends State<WheelSpinner>
   AnimationController rotationAnimationController;
   Animation rotation;
 
+  SpinVelocity _spinVelocity;
+
+  double _panDeltaAngle = 0.0;
+
   @override
   void initState() {
     super.initState();
+
+    _spinVelocity = new SpinVelocity(
+      diameter: widget.diameter,
+    );
 
     rotationAnimationController = new AnimationController(
       vsync: this,
@@ -57,7 +66,7 @@ class _WheelSpinnerState extends State<WheelSpinner>
               animation: rotation,
               builder: (context, child) {
                 return Transform.rotate(
-                  angle: rotation.value,
+                  angle: _panDeltaAngle,
                   child: CustomPaint(
                     painter: WheelPainter(
                       coarseDividerCount: widget.coarseDividerCount,
@@ -91,6 +100,13 @@ class _WheelSpinnerState extends State<WheelSpinner>
   }
 
   void onPanStart(DragStartDetails details) {}
-  void onPanUpdate(DragUpdateDetails details) {}
+  void onPanUpdate(DragUpdateDetails details) {
+    var angle = _spinVelocity.offsetToRadians(details.localPosition);
+
+    setState(() {
+      _panDeltaAngle = angle;
+    });
+  }
+
   void onPanEnd(DragEndDetails details) {}
 }
