@@ -2,6 +2,7 @@ import 'dart:core';
 
 import 'package:SpinTheWheel/wheel_spinner.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class WheelSpinnerPage extends StatefulWidget {
   @override
@@ -33,6 +34,7 @@ class _WheelSpinnerPageState extends State<WheelSpinnerPage>
           Center(
             child: WheelSpinner(
               onCountChanged: (count) {
+                HapticFeedback.mediumImpact();
                 setState(() {
                   this.count = count;
                 });

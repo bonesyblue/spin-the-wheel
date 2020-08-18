@@ -63,7 +63,6 @@ class _WheelSpinnerState extends State<WheelSpinner>
       ),
     )..addListener(() {
         _updateAnimationValues();
-        widget.onCountChanged(_currentDivider);
       });
   }
 
