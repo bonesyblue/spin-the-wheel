@@ -67,7 +67,7 @@ class NonUniformCircularMotion {
   duration(double velocity) => -velocity / acceleration;
 
   /// modulo in a circunference
-  modulo(double angle) => angle % (2 * pi);
+  modulo(dynamic angle) => angle % (2 * pi);
 
   /// angle per division in a circunference with x dividers
   anglePerDivision(int dividers) => (2 * pi) / dividers;
