@@ -40,6 +40,9 @@ class _WheelSpinnerPageState extends State<WheelSpinnerPage>
                 });
               },
               diameter: this.diameter,
+              rangeMax: 500,
+              rangeInterval: 10,
+              rangeMin: 0,
             ),
           ),
         ],

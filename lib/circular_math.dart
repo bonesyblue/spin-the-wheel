@@ -25,25 +25,25 @@ class SpinVelocity {
   });
 
   double getVelocity(Offset position, Offset pps) {
-    var quadrantIndex = _getQuadrantFromOffset(position);
+    var quadrantIndex = getQuadrantFromOffset(position);
     var quadrant = quadrants[quadrantIndex];
     return (quadrant.dx * pps.dx) + (quadrant.dy * pps.dy);
   }
 
-  /// transforms (x,y) into radians assuming we start at positive y axis as 0
+  /// transforms (x,y) into radians with reference to the origin
   double offsetToRadians(Offset position) {
     var a = position.dx - radius;
     var b = radius - position.dy;
     var angle = atan2(b, a);
-    return _normalizeAngle(angle);
+    return normalizeAngle(angle);
   }
 
-  int _getQuadrantFromOffset(Offset p) =>
+  int getQuadrantFromOffset(Offset p) =>
       p.dx > radius ? (p.dy > radius ? 2 : 1) : (p.dy > radius ? 3 : 4);
 
   // radians go from 0 to pi (positive y axis) and 0 to -pi (negative y axis)
   // we need radians from positive y axis (0) clockwise back to y axis (2pi)
-  double _normalizeAngle(double angle) => angle > 0
+  double normalizeAngle(double angle) => angle > 0
       ? (angle > pi_0_5 ? (pi_2_5 - angle) : (pi_0_5 - angle))
       : pi_0_5 - angle;
 
@@ -66,11 +66,11 @@ class NonUniformCircularMotion {
   /// movement duration with initial velocity
   duration(double velocity) => -velocity / acceleration;
 
-  /// modulo in a circunference
+  /// modulo in a circumference
   modulo(dynamic angle) => angle % (2 * pi);
 
   /// angle per division in a circunference with x dividers
-  anglePerDivision(int dividers) => (2 * pi) / dividers;
+  anglePerDivision(double dividers) => (2 * pi) / dividers;
 }
 
 /// transforms pixels per second as used by Flutter to radians

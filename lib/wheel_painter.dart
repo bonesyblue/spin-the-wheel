@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 class WheelPainter extends CustomPainter {
-  final int coarseDividerCount;
+  final double coarseDividerCount;
 
   WheelPainter({
     @required this.coarseDividerCount,
@@ -49,7 +49,7 @@ class WheelPainter extends CustomPainter {
     );
 
     // Fine scale markers
-    final fineScaleCount = coarseDividerCount * 5;
+    final fineScaleCount = coarseDividerCount * 2;
     final fineScaleInnerRadius = radius - 12;
 
     drawScaleLines(
@@ -62,7 +62,7 @@ class WheelPainter extends CustomPainter {
   }
 
   void drawScaleLines({
-    @required int count,
+    @required double count,
     @required Offset center,
     @required double outerRadius,
     @required double innerRadius,

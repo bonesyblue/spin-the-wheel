@@ -1,16 +1,22 @@
+import 'dart:math';
+
 import 'package:SpinTheWheel/circular_math.dart';
 import 'package:SpinTheWheel/wheel_painter.dart';
 import 'package:flutter/material.dart';
 
 class WheelSpinner extends StatefulWidget {
-  final int coarseDividerCount;
   final double diameter;
   final Function(int count) onCountChanged;
+  final rangeMin;
+  final rangeMax;
+  final rangeInterval;
 
   WheelSpinner({
     @required this.diameter,
-    this.coarseDividerCount = 24,
+    @required this.rangeInterval,
+    @required this.rangeMax,
     this.onCountChanged,
+    this.rangeMin = 0,
   });
 
   @override
@@ -32,9 +38,14 @@ class _WheelSpinnerState extends State<WheelSpinner>
   bool _isBackwards;
   double _totalDuration = 0.0;
   double _initialCircularVelocity = 0.0;
-  double _initialSpinAngle = 0.0;
+  double rotationAngle = 0.0;
   double _coarseDividerAngle;
   int _currentDivider;
+
+  double get coarseDividerCount =>
+      1 +
+      ((this.widget.rangeMax - this.widget.rangeMin) /
+          this.widget.rangeInterval);
 
   @override
   void initState() {
@@ -45,7 +56,7 @@ class _WheelSpinnerState extends State<WheelSpinner>
       diameter: widget.diameter,
     );
     _motion = new NonUniformCircularMotion(resistance: 1.0);
-    _coarseDividerAngle = _motion.anglePerDivision(widget.coarseDividerCount);
+    _coarseDividerAngle = _motion.anglePerDivision(coarseDividerCount);
 
     // Initialise the rotation animation associated properties
     _rotationAnimationController = new AnimationController(
@@ -80,10 +91,10 @@ class _WheelSpinnerState extends State<WheelSpinner>
               animation: _rotation,
               builder: (context, child) {
                 return Transform.rotate(
-                  angle: _initialSpinAngle + _currentDistance,
+                  angle: rotationAngle + _currentDistance,
                   child: CustomPaint(
                     painter: WheelPainter(
-                      coarseDividerCount: widget.coarseDividerCount,
+                      coarseDividerCount: coarseDividerCount,
                     ),
                   ),
                 );
@@ -98,6 +109,56 @@ class _WheelSpinnerState extends State<WheelSpinner>
         ),
       ],
     );
+  }
+
+  void onPanUpdate(DragUpdateDetails details) {
+    // Need to calculate the delta between current position and start, with reference to the centerpoint
+    final currentPosition = details.localPosition;
+    final previousPosition = currentPosition - details.delta;
+    final startTheta = _spinVelocity.offsetToRadians(previousPosition);
+    final endTheta = _spinVelocity.offsetToRadians(currentPosition);
+    final deltaTheta = endTheta - startTheta;
+
+    final newRotationAngle = rotationAngle += deltaTheta;
+
+    // Angle as a ratio to 2π
+    double modulo = _motion.modulo(rotationAngle);
+
+    // Get the closest divider
+    int dividerCount = (modulo / _coarseDividerAngle).truncate();
+
+    int prev = _currentDivider;
+
+    _currentDivider = dividerCount;
+
+    if (prev != _currentDivider) {
+      widget.onCountChanged(_currentDivider);
+    }
+
+    setState(() {
+      newRotationAngle.clamp(0, 1.5 * pi);
+    });
+  }
+
+  void onPanEnd(DragEndDetails details) {
+    if (this._rotationAnimationController.isAnimating) return;
+
+    var velocity = _spinVelocity.getVelocity(
+      _localPosition,
+      details.velocity.pixelsPerSecond,
+    );
+
+    _localPosition = null;
+
+    _isBackwards = velocity < 0;
+    // _initialCircularVelocity = pixelsPerSecondToRadians(velocity.abs());
+    // _totalDuration = _motion.duration(_initialCircularVelocity);
+
+    // _rotationAnimationController.duration =
+    //     Duration(milliseconds: (_totalDuration * 1000).round());
+
+    // _rotationAnimationController.reset();
+    // _rotationAnimationController.forward();
   }
 
   void toggleAnimation() {
@@ -123,55 +184,28 @@ class _WheelSpinnerState extends State<WheelSpinner>
       }
     }
 
-    this.updateCurrentDivider();
-
-    double modulo = _motion.modulo(_currentDistance + _initialSpinAngle);
+    double modulo = _motion.modulo(_currentDistance + rotationAngle);
 
     if (!_rotationAnimationController.isAnimating) {
-      _initialSpinAngle = modulo;
+      rotationAngle = modulo;
       _currentDistance = 0.0;
     }
   }
 
   void updateCurrentDivider() {
-    double modulo = _motion.modulo(_currentDistance + _initialSpinAngle);
+    // Angle as a ratio to 2π
+    double modulo = _motion.modulo(rotationAngle);
+
+    // Get the closest divider
+    int dividerCount = (modulo / _coarseDividerAngle).truncate();
+
     int prev = _currentDivider;
-    _currentDivider =
-        widget.coarseDividerCount - (modulo ~/ _coarseDividerAngle);
+
+    _currentDivider = dividerCount;
 
     if (prev != _currentDivider) {
+      print(_currentDivider);
       widget.onCountChanged(_currentDivider);
     }
-  }
-
-  void onPanUpdate(DragUpdateDetails details) {
-    _localPosition = details.localPosition;
-    var angle = _spinVelocity.offsetToRadians(_localPosition);
-
-    this.updateCurrentDivider();
-
-    setState(() {
-      _initialSpinAngle = angle;
-    });
-  }
-
-  void onPanEnd(DragEndDetails details) {
-    if (this._rotationAnimationController.isAnimating) return;
-
-    var velocity = _spinVelocity.getVelocity(
-      _localPosition,
-      details.velocity.pixelsPerSecond,
-    );
-
-    _localPosition = null;
-    _isBackwards = velocity < 0;
-    _initialCircularVelocity = pixelsPerSecondToRadians(velocity.abs());
-    _totalDuration = _motion.duration(_initialCircularVelocity);
-
-    _rotationAnimationController.duration =
-        Duration(milliseconds: (_totalDuration * 1000).round());
-
-    _rotationAnimationController.reset();
-    _rotationAnimationController.forward();
   }
 }

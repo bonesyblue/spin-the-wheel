@@ -1,7 +1,12 @@
+import 'package:SpinTheWheel/utils/app_logger.dart';
 import 'package:SpinTheWheel/wheel_spinner_page.dart';
 import 'package:flutter/material.dart';
 
 void main() {
+  /// Instantiate logging helper
+  AppLogger(logIdentifier: "STW");
+
+  /// Run the aoo
   runApp(MyApp());
 }
 
