@@ -2,6 +2,7 @@
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:SpinTheWheel/utils/app_logger.dart';
 import 'package:meta/meta.dart';
 
 const Map<int, Offset> quadrants = const {
@@ -48,6 +49,30 @@ class SpinVelocity {
       : pi_0_5 - angle;
 
   bool contains(Offset p) => Size(diameter, diameter).contains(p);
+
+  double radiansToDegrees(double radians) => 180 * radians / pi;
+
+  bool isClockwise(Offset position, Offset delta) {
+    final quadrantIndex = getQuadrantFromOffset(position);
+
+    /// Assuming the first quadrant is at the 12 o' clock position, we
+    /// can calculate whether the wheel is being rotated clockwise. The
+    /// co-ordinate system has a reference to the space origin (top left)
+    /// and therefore increasing y is right and increasing x is down.
+
+    switch (quadrantIndex) {
+      case 1:
+        return delta.dy > 0 || delta.dx > 0;
+      case 2:
+        return delta.dy > 0 || delta.dx < 0;
+      case 3:
+        return delta.dy < 0 || delta.dx < 0;
+      case 4:
+        return delta.dy < 0 || delta.dx > 0;
+      default:
+        throw Exception("Invalid quadrant index");
+    }
+  }
 }
 
 class NonUniformCircularMotion {

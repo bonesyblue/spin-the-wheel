@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:SpinTheWheel/circular_math.dart';
+import 'package:SpinTheWheel/utils/app_logger.dart';
 import 'package:SpinTheWheel/wheel_painter.dart';
 import 'package:flutter/material.dart';
 
@@ -43,9 +44,7 @@ class _WheelSpinnerState extends State<WheelSpinner>
   int _currentDivider;
 
   double get coarseDividerCount =>
-      1 +
-      ((this.widget.rangeMax - this.widget.rangeMin) /
-          this.widget.rangeInterval);
+      (this.widget.rangeMax - this.widget.rangeMin) / this.widget.rangeInterval;
 
   @override
   void initState() {
@@ -75,6 +74,8 @@ class _WheelSpinnerState extends State<WheelSpinner>
     )..addListener(() {
         _updateAnimationValues();
       });
+
+    _currentDivider = (widget.rangeMin / widget.rangeInterval).floor();
   }
 
   @override
@@ -119,38 +120,41 @@ class _WheelSpinnerState extends State<WheelSpinner>
     final endTheta = _spinVelocity.offsetToRadians(currentPosition);
     final deltaTheta = endTheta - startTheta;
 
-    final newRotationAngle = rotationAngle += deltaTheta;
+    // final maxCon
 
-    // Angle as a ratio to 2π
-    double modulo = _motion.modulo(rotationAngle);
+    // Limit the rotation value to the range 0 -> 2π
+    final newRotationAngle = (rotationAngle += deltaTheta)
+        .clamp(0.0, (2 * pi) - _coarseDividerAngle);
+
+    // 2π = max, 0 = min
+    double modulo = _motion.modulo(newRotationAngle);
 
     // Get the closest divider
-    int dividerCount = (modulo / _coarseDividerAngle).truncate();
+    int dividerCount = (modulo / _coarseDividerAngle).floor();
 
     int prev = _currentDivider;
 
-    _currentDivider = dividerCount;
-
-    if (prev != _currentDivider) {
+    if (prev != dividerCount) {
+      _currentDivider = dividerCount;
       widget.onCountChanged(_currentDivider);
     }
 
     setState(() {
-      newRotationAngle.clamp(0, 1.5 * pi);
+      rotationAngle = newRotationAngle;
     });
   }
 
   void onPanEnd(DragEndDetails details) {
     if (this._rotationAnimationController.isAnimating) return;
 
-    var velocity = _spinVelocity.getVelocity(
-      _localPosition,
-      details.velocity.pixelsPerSecond,
-    );
+    // var velocity = _spinVelocity.getVelocity(
+    //   _localPosition,
+    //   details.velocity.pixelsPerSecond,
+    // );
 
-    _localPosition = null;
+    // _localPosition = null;
 
-    _isBackwards = velocity < 0;
+    // _isBackwards = velocity < 0;
     // _initialCircularVelocity = pixelsPerSecondToRadians(velocity.abs());
     // _totalDuration = _motion.duration(_initialCircularVelocity);
 

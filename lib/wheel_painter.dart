@@ -59,6 +59,14 @@ class WheelPainter extends CustomPainter {
       innerRadius: fineScaleInnerRadius,
       canvas: canvas,
     );
+
+    //
+    final brush = Paint()..color = Colors.blue;
+    canvas.drawCircle(
+      centerpoint - Offset(radius, 0),
+      6,
+      brush,
+    );
   }
 
   void drawScaleLines({
